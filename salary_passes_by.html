@@ -1,0 +1,1151 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>월급은 통장을 스칠 뿐</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net" />
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.min.css" />
+<style>
+:root{
+  --bg:#0e0f12;
+  --panel:#16181d;
+  --panel-2:#1d2027;
+  --line:#262a33;
+  --ink:#e8e6df;
+  --ink-dim:#8a8f99;
+  --ink-faint:#5a5f6b;
+  --up:#5fcf80;
+  --down:#ff6b6b;
+  --warn:#f5b942;
+  --accent:#d9c7a0;
+  --paper:#f4ede0;
+  --paper-ink:#2a2620;
+}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;overscroll-behavior:none}
+body{
+  font-family:'Pretendard',-apple-system,sans-serif;
+  background:var(--bg);color:var(--ink);
+  font-size:14px;line-height:1.5;
+  min-height:100vh;display:flex;justify-content:center;
+}
+.app{
+  width:100%;max-width:440px;min-height:100vh;
+  background:var(--bg);position:relative;
+  display:flex;flex-direction:column;
+  border-left:1px solid var(--line);border-right:1px solid var(--line);
+}
+/* ===== 타이틀 화면 ===== */
+.screen{flex:1;display:none;flex-direction:column;animation:fadeIn .3s ease}
+.screen.active{display:flex}
+@keyframes fadeIn{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+
+#title-screen{justify-content:center;align-items:center;padding:32px;text-align:center;gap:8px}
+#title-screen .sub{color:var(--ink-faint);font-size:12px;letter-spacing:.2em}
+#title-screen h1{
+  font-size:34px;font-weight:800;margin:24px 0 8px;line-height:1.2;
+  letter-spacing:-.02em;
+}
+#title-screen h1 .accent{color:var(--accent);font-style:italic;font-weight:300}
+#title-screen .tag{color:var(--ink-dim);margin-bottom:48px;font-size:13px}
+.menu-btn{
+  width:100%;max-width:280px;padding:16px;margin:6px 0;
+  background:transparent;border:1px solid var(--line);color:var(--ink);
+  font-family:inherit;font-size:14px;cursor:pointer;
+  transition:all .15s;letter-spacing:.05em;
+}
+.menu-btn:hover,.menu-btn:active{background:var(--panel);border-color:var(--accent)}
+.menu-btn.primary{background:var(--accent);color:#000;border-color:var(--accent);font-weight:600}
+.menu-btn.primary:hover{filter:brightness(1.1)}
+
+/* ===== 캐릭터 생성 ===== */
+#create-screen{padding:32px 24px;gap:20px}
+#create-screen h2{font-size:22px;margin-bottom:4px}
+#create-screen .desc{color:var(--ink-dim);font-size:13px;margin-bottom:16px}
+.field{margin-bottom:20px}
+.field label{display:block;color:var(--ink-dim);font-size:11px;letter-spacing:.15em;margin-bottom:8px}
+.field input[type=text]{
+  width:100%;background:var(--panel);border:1px solid var(--line);
+  padding:14px;color:var(--ink);font-family:inherit;font-size:15px;
+}
+.field input[type=text]:focus{outline:none;border-color:var(--accent)}
+.job-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.job-card{
+  padding:14px;border:1px solid var(--line);background:var(--panel);
+  cursor:pointer;transition:all .15s;
+}
+.job-card.selected{border-color:var(--accent);background:var(--panel-2)}
+.job-card .name{font-weight:600;margin-bottom:4px}
+.job-card .salary{color:var(--accent);font-size:13px;margin-bottom:6px}
+.job-card .desc-sm{color:var(--ink-faint);font-size:11px;line-height:1.4}
+
+/* ===== 게임 메인 ===== */
+#game-screen{padding:0;background:var(--bg)}
+.topbar{
+  padding:14px 18px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  background:var(--panel);
+}
+.topbar .date{font-weight:600;font-size:13px}
+.topbar .age{color:var(--ink-dim);font-size:11px;letter-spacing:.1em}
+.topbar .save-btn{
+  background:none;border:1px solid var(--line);color:var(--ink-dim);
+  padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;
+}
+
+/* 자산 패널 */
+.money-panel{padding:18px;border-bottom:1px solid var(--line);background:var(--panel)}
+.money-main{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:14px}
+.money-main .label{font-size:10px;letter-spacing:.2em;color:var(--ink-faint);margin-bottom:2px}
+.money-main .total{font-size:28px;font-weight:800;letter-spacing:-.02em}
+.money-main .change{font-size:12px;margin-bottom:6px}
+.money-main .change.up{color:var(--up)}
+.money-main .change.down{color:var(--down)}
+.money-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;font-size:11px}
+.money-grid .item{background:var(--panel-2);padding:10px;border:1px solid var(--line)}
+.money-grid .item .lbl{color:var(--ink-faint);font-size:10px;margin-bottom:4px}
+.money-grid .item .val{font-weight:600;font-size:13px}
+
+/* 스탯바 */
+.stats-panel{padding:14px 18px;border-bottom:1px solid var(--line);background:var(--bg)}
+.stat-row{display:flex;align-items:center;margin-bottom:8px;gap:8px}
+.stat-row:last-child{margin-bottom:0}
+.stat-row .ico{width:18px;font-size:13px;text-align:center}
+.stat-row .name{width:50px;color:var(--ink-dim);font-size:11px}
+.stat-row .bar{flex:1;height:6px;background:var(--panel-2);border:1px solid var(--line);overflow:hidden}
+.stat-row .bar > div{height:100%;transition:width .4s ease}
+.stat-row .val{width:32px;text-align:right;font-size:11px;color:var(--ink-dim);font-variant-numeric:tabular-nums}
+.bar-fill-good{background:var(--up)}
+.bar-fill-mid{background:var(--warn)}
+.bar-fill-bad{background:var(--down)}
+
+/* 메인 콘텐츠 영역 */
+.content{flex:1;padding:18px;overflow-y:auto}
+
+/* 이벤트 카드 */
+.event-card{
+  background:var(--panel);border:1px solid var(--line);
+  padding:20px;margin-bottom:14px;position:relative;
+  animation:slideUp .3s ease;
+}
+@keyframes slideUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:none}}
+.event-card .tag{
+  display:inline-block;font-size:10px;letter-spacing:.2em;
+  color:var(--accent);border:1px solid var(--accent);
+  padding:2px 8px;margin-bottom:12px;
+}
+.event-card .tag.daily{color:var(--ink-dim);border-color:var(--ink-faint)}
+.event-card .tag.career{color:#79b8ff;border-color:#79b8ff}
+.event-card .tag.social{color:var(--warn);border-color:var(--warn)}
+.event-card .tag.danger{color:var(--down);border-color:var(--down)}
+.event-card h3{font-size:17px;font-weight:700;margin-bottom:8px;line-height:1.4}
+.event-card .narration{
+  color:var(--ink-dim);font-size:13px;line-height:1.7;
+  border-left:2px solid var(--line);padding-left:12px;margin-bottom:18px;
+  font-style:italic;
+}
+.choices{display:flex;flex-direction:column;gap:8px}
+.choice-btn{
+  background:var(--panel-2);border:1px solid var(--line);
+  color:var(--ink);padding:14px;text-align:left;cursor:pointer;
+  font-family:inherit;font-size:13px;line-height:1.5;
+  transition:all .15s;
+}
+.choice-btn:hover,.choice-btn:active{border-color:var(--accent);background:#22252e}
+.choice-btn .eff{
+  display:block;margin-top:6px;font-size:11px;color:var(--ink-faint);
+  font-variant-numeric:tabular-nums;
+}
+.choice-btn.tempting{border-color:#3a2d1f}
+.choice-btn.tempting .eff{color:#b59060}
+
+/* 영수증 (월말 리포트) */
+.receipt{
+  background:var(--paper);color:var(--paper-ink);
+  padding:24px;margin-bottom:14px;
+  font-family:'Courier New',monospace;
+  box-shadow:0 4px 20px rgba(0,0,0,.3);
+  position:relative;
+}
+.receipt::before,.receipt::after{
+  content:'';position:absolute;left:0;right:0;height:8px;
+  background:radial-gradient(circle at 4px 0,transparent 4px,var(--paper) 4px);
+  background-size:8px 8px;
+}
+.receipt::before{top:-4px;transform:rotate(180deg)}
+.receipt::after{bottom:-4px}
+.receipt h4{
+  text-align:center;font-size:14px;margin-bottom:4px;
+  letter-spacing:.3em;font-family:inherit;
+}
+.receipt .date-line{
+  text-align:center;font-size:11px;color:#777;
+  margin-bottom:16px;border-bottom:1px dashed #999;padding-bottom:10px;
+}
+.receipt .line{
+  display:flex;justify-content:space-between;padding:3px 0;
+  font-size:12px;font-family:inherit;
+}
+.receipt .line .pos{color:#0a5d2a;font-weight:600}
+.receipt .line .neg{color:#a82020;font-weight:600}
+.receipt .total-line{
+  border-top:1px dashed #999;margin-top:10px;padding-top:8px;
+  font-weight:700;font-size:13px;
+}
+.receipt .quote{
+  text-align:center;font-style:italic;color:#666;
+  margin-top:14px;padding-top:10px;border-top:1px dashed #999;
+  font-size:11px;
+}
+
+/* 다음 달 버튼 */
+.next-btn{
+  width:100%;padding:18px;background:var(--accent);color:#000;
+  border:none;font-family:inherit;font-size:14px;font-weight:700;
+  letter-spacing:.1em;cursor:pointer;margin-top:6px;
+}
+.next-btn:hover{filter:brightness(1.05)}
+
+/* 투자 모달 */
+.modal-bg{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  display:none;justify-content:center;align-items:flex-end;z-index:100;
+  animation:fadeIn .2s;
+}
+.modal-bg.open{display:flex}
+.modal{
+  width:100%;max-width:440px;background:var(--bg);
+  border-top:1px solid var(--accent);
+  max-height:85vh;overflow-y:auto;
+  animation:slideUpModal .3s;
+}
+@keyframes slideUpModal{from{transform:translateY(100%)}to{transform:none}}
+.modal-header{
+  padding:16px 18px;border-bottom:1px solid var(--line);
+  display:flex;justify-content:space-between;align-items:center;
+  position:sticky;top:0;background:var(--bg);z-index:1;
+}
+.modal-header h3{font-size:16px}
+.modal-header .close{
+  background:none;border:none;color:var(--ink-dim);
+  font-size:24px;cursor:pointer;line-height:1;
+}
+.modal-body{padding:18px}
+
+.invest-item{
+  background:var(--panel);border:1px solid var(--line);
+  padding:14px;margin-bottom:10px;
+}
+.invest-item .top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px}
+.invest-item .name{font-weight:600;font-size:14px}
+.invest-item .risk{font-size:10px;color:var(--ink-faint);letter-spacing:.1em}
+.invest-item .desc-i{color:var(--ink-dim);font-size:11px;margin-bottom:10px;line-height:1.5}
+.invest-item .holdings{font-size:12px;color:var(--accent);margin-bottom:10px;font-variant-numeric:tabular-nums}
+.invest-item .actions{display:flex;gap:6px}
+.invest-item .actions button{
+  flex:1;padding:8px;background:var(--panel-2);border:1px solid var(--line);
+  color:var(--ink);font-family:inherit;font-size:12px;cursor:pointer;
+}
+.invest-item .actions button:hover{border-color:var(--accent)}
+.invest-item .actions input{
+  flex:1.5;padding:8px;background:var(--panel-2);border:1px solid var(--line);
+  color:var(--ink);font-family:inherit;font-size:12px;text-align:right;
+}
+
+/* 엔딩 */
+#ending-screen{padding:32px 24px;justify-content:center;text-align:center}
+#ending-screen .ending-icon{font-size:64px;margin-bottom:16px}
+#ending-screen h2{font-size:26px;margin-bottom:8px;font-weight:800}
+#ending-screen .ending-desc{color:var(--ink-dim);font-size:13px;line-height:1.7;margin-bottom:24px;padding:0 8px}
+#ending-screen .stats-final{
+  background:var(--panel);border:1px solid var(--line);
+  padding:18px;margin-bottom:20px;text-align:left;font-size:13px;
+}
+#ending-screen .stats-final .ln{display:flex;justify-content:space-between;padding:4px 0}
+#ending-screen .stats-final .ln span:last-child{color:var(--accent);font-weight:600;font-variant-numeric:tabular-nums}
+#ending-screen .epilogue{
+  font-style:italic;color:var(--ink-dim);font-size:12px;
+  border-left:2px solid var(--accent);padding-left:12px;text-align:left;
+  margin-bottom:24px;
+}
+
+/* 토스트 */
+.toast{
+  position:fixed;top:20px;left:50%;transform:translateX(-50%);
+  background:var(--panel-2);border:1px solid var(--accent);
+  padding:10px 18px;color:var(--ink);font-size:12px;
+  z-index:1000;opacity:0;transition:opacity .3s;
+  pointer-events:none;
+}
+.toast.show{opacity:1}
+
+/* 작은 도움말 */
+.hint{color:var(--ink-faint);font-size:10px;letter-spacing:.1em;text-align:center;padding:10px 0}
+
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- 1. 타이틀 화면 -->
+  <div id="title-screen" class="screen active">
+    <div class="sub">2026 · SEOUL · AGE 27</div>
+    <h1>월급은 통장을<br><span class="accent">스칠 뿐</span></h1>
+    <div class="tag">— 청년 자립 시뮬레이션 —</div>
+    <button class="menu-btn primary" onclick="UI.showCreate()">새 게임 시작</button>
+    <button class="menu-btn" onclick="Save.load()">이어하기</button>
+    <button class="menu-btn" onclick="UI.showHelp()">게임 설명</button>
+    <div class="hint" style="margin-top:48px">v0.1 MVP</div>
+  </div>
+
+  <!-- 2. 캐릭터 생성 -->
+  <div id="create-screen" class="screen">
+    <h2>당신의 출발선</h2>
+    <p class="desc">27세, 사회에 막 발을 들인 당신.<br>어떤 자리에서 시작하시겠습니까?</p>
+
+    <div class="field">
+      <label>이름</label>
+      <input type="text" id="player-name" maxlength="6" placeholder="예) 김희석" />
+    </div>
+
+    <div class="field">
+      <label>직업 선택</label>
+      <div class="job-grid" id="job-grid"></div>
+    </div>
+
+    <button class="menu-btn primary" onclick="Game.startNew()">시작하기 ▶</button>
+    <button class="menu-btn" onclick="UI.show('title-screen')">← 돌아가기</button>
+  </div>
+
+  <!-- 3. 게임 메인 -->
+  <div id="game-screen" class="screen">
+    <div class="topbar">
+      <div>
+        <div class="date" id="game-date">2026년 1월</div>
+        <div class="age" id="game-age">27세 · 1개월차</div>
+      </div>
+      <button class="save-btn" onclick="Save.save()">저장</button>
+    </div>
+
+    <div class="money-panel">
+      <div class="money-main">
+        <div>
+          <div class="label">순자산</div>
+          <div class="total" id="net-worth">0원</div>
+        </div>
+        <div class="change" id="net-change"></div>
+      </div>
+      <div class="money-grid">
+        <div class="item"><div class="lbl">현금</div><div class="val" id="cash-val">0</div></div>
+        <div class="item"><div class="lbl">적금/투자</div><div class="val" id="asset-val">0</div></div>
+        <div class="item"><div class="lbl">신용점수</div><div class="val" id="credit-val">750</div></div>
+      </div>
+    </div>
+
+    <div class="stats-panel">
+      <div class="stat-row">
+        <span class="ico">❤️</span><span class="name">건강</span>
+        <div class="bar"><div id="bar-health"></div></div>
+        <span class="val" id="val-health">80</span>
+      </div>
+      <div class="stat-row">
+        <span class="ico">🧠</span><span class="name">멘탈</span>
+        <div class="bar"><div id="bar-mental"></div></div>
+        <span class="val" id="val-mental">70</span>
+      </div>
+      <div class="stat-row">
+        <span class="ico">👥</span><span class="name">관계</span>
+        <div class="bar"><div id="bar-relation"></div></div>
+        <span class="val" id="val-relation">60</span>
+      </div>
+    </div>
+
+    <div class="content" id="game-content"></div>
+
+    <!-- 하단 액션 -->
+    <div style="display:flex;border-top:1px solid var(--line);background:var(--panel)">
+      <button onclick="UI.openInvest()" style="flex:1;padding:14px;background:none;border:none;border-right:1px solid var(--line);color:var(--ink-dim);font-family:inherit;font-size:12px;cursor:pointer">📊 투자</button>
+      <button onclick="UI.openExpense()" style="flex:1;padding:14px;background:none;border:none;border-right:1px solid var(--line);color:var(--ink-dim);font-family:inherit;font-size:12px;cursor:pointer">💸 지출</button>
+      <button onclick="if(confirm('타이틀로 돌아갈까요? (저장은 따로)')){UI.show(\"title-screen\")}" style="flex:1;padding:14px;background:none;border:none;color:var(--ink-dim);font-family:inherit;font-size:12px;cursor:pointer">🏠 메뉴</button>
+    </div>
+  </div>
+
+  <!-- 4. 엔딩 -->
+  <div id="ending-screen" class="screen">
+    <div class="ending-icon" id="ending-icon">🎬</div>
+    <h2 id="ending-title">엔딩</h2>
+    <p class="ending-desc" id="ending-desc"></p>
+    <div class="stats-final" id="ending-stats"></div>
+    <div class="epilogue" id="ending-epilogue"></div>
+    <button class="menu-btn primary" onclick="UI.show('title-screen')">처음으로</button>
+  </div>
+
+</div>
+
+<!-- 투자 모달 -->
+<div class="modal-bg" id="invest-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>투자 / 자산 관리</h3>
+      <button class="close" onclick="UI.closeModal('invest-modal')">×</button>
+    </div>
+    <div class="modal-body" id="invest-body"></div>
+  </div>
+</div>
+
+<!-- 지출 모달 -->
+<div class="modal-bg" id="expense-modal">
+  <div class="modal">
+    <div class="modal-header">
+      <h3>이번 달 고정지출</h3>
+      <button class="close" onclick="UI.closeModal('expense-modal')">×</button>
+    </div>
+    <div class="modal-body" id="expense-body"></div>
+  </div>
+</div>
+
+<!-- 토스트 -->
+<div class="toast" id="toast"></div>
+
+<script>
+/* =========================================================
+   데이터 정의
+   ========================================================= */
+const JOBS = [
+  {id:'office', name:'사무직', salary:2900000, vol:0, desc:'안정적인 대기업 신입.\n월급 변동 없음, 성장 느림.'},
+  {id:'dev',    name:'IT 개발자', salary:3200000, vol:0, desc:'야근 잦지만 이직 보너스 큼.\n중간 변동성.'},
+  {id:'service',name:'서비스직', salary:2200000, vol:0, desc:'시작 부담 적지만\n승진/연봉인상이 어려움.'},
+  {id:'free',   name:'프리랜서', salary:2500000, vol:0.5, desc:'매월 수입 50% 랜덤.\n대박 or 쪽박.'}
+];
+
+const INVESTMENTS = [
+  {id:'savings', name:'적금', desc:'연 3.6% 고정. 안전.', risk:'★', baseReturn:0.003, vol:0, unlock:0},
+  {id:'etf_kr',  name:'코스피 ETF', desc:'국내 시장 추종. 중간 변동.', risk:'★★★', baseReturn:0.006, vol:0.06, unlock:3},
+  {id:'etf_us',  name:'S&P 500 ETF', desc:'미국 시장 추종. 장기 우상향.', risk:'★★★', baseReturn:0.008, vol:0.07, unlock:6},
+  {id:'coin',    name:'코인 (BTC)', desc:'단톡방 멤버 모두가 사라.', risk:'★★★★★', baseReturn:0.015, vol:0.30, unlock:0}
+];
+
+/* 이벤트 풀 */
+const EVENTS = [
+  // ===== 일상 이벤트 =====
+  {id:'ev_phone', tag:'daily', tagName:'일상', title:'휴대폰이 고장났다',
+   narration:'아침에 일어났더니 화면이 켜지지 않는다. 수리 견적 25만원, 새 폰은 130만원.',
+   weight:6, choices:[
+     {text:'수리해서 쓴다 (-250,000원)', eff:{cash:-250000}},
+     {text:'중고폰으로 갈아탄다 (-400,000원)', eff:{cash:-400000, mental:+2}},
+     {text:'할부로 최신폰을 산다 (24개월 할부, 신용↓)', eff:{cash:-100000, debt:+1200000, creditScore:-15, mental:+8}, tempting:true}
+   ]},
+
+  {id:'ev_friend_wedding', tag:'social', tagName:'관계', title:'친구 결혼식 청첩장',
+   narration:'대학 동기에게 청첩장이 왔다. 안 가면 두고두고 어색해질 것 같다.',
+   weight:7, conditions:{monthMin:3}, choices:[
+     {text:'축의금 10만원 (적당)', eff:{cash:-100000, relation:+3}},
+     {text:'축의금 20만원 + 옷차림 신경 (-350,000원)', eff:{cash:-350000, relation:+8, mental:+2}},
+     {text:'바쁘다고 못 간다 (관계 -10)', eff:{relation:-10, mental:-3}}
+   ]},
+
+  {id:'ev_overtime', tag:'career', tagName:'업무', title:'갑작스러운 야근 시즌',
+   narration:'프로젝트 마감이 다가왔다. 다음 한 달은 야근의 연속이 될 것 같다.',
+   weight:8, choices:[
+     {text:'갈아 넣는다 (멘탈-12, 건강-8, 보너스 가능성↑)', eff:{mental:-12, health:-8, careerExp:+15}},
+     {text:'적당히 한다 (멘탈-5, 평타)', eff:{mental:-5, health:-3, careerExp:+5}},
+     {text:'칼퇴를 시도한다 (관계-5, 멘탈+5)', eff:{relation:-5, mental:+5, careerExp:-3}}
+   ]},
+
+  {id:'ev_dating', tag:'social', tagName:'관계', title:'소개팅 제안',
+   narration:'친한 형/언니가 소개팅을 주선해주겠다고 한다. 옷도 사야 하고 데이트 비용도 만만치 않다.',
+   weight:5, choices:[
+     {text:'풀세팅하고 나간다 (-200,000원, 관계+10)', eff:{cash:-200000, relation:+10, mental:+5}},
+     {text:'편하게 만난다 (-50,000원)', eff:{cash:-50000, relation:+5, mental:+3}},
+     {text:'거절한다 (혼자가 편하다)', eff:{mental:-2, relation:-2}}
+   ]},
+
+  {id:'ev_hospital', tag:'danger', tagName:'경고', title:'갑작스러운 병원행',
+   narration:'몸이 평소와 다르다. 병원에 가봤더니 검사를 권유받았다.',
+   weight:4, conditions:{healthMax:60}, choices:[
+     {text:'정밀검사 받기 (-500,000원, 건강+15)', eff:{cash:-500000, health:+15, mental:+3}},
+     {text:'기본 처방만 받기 (-80,000원)', eff:{cash:-80000, health:+3}},
+     {text:'그냥 견딘다 (건강-10)', eff:{health:-10, mental:-5}}
+   ]},
+
+  {id:'ev_family', tag:'social', tagName:'가족', title:'부모님께서 전화하셨다',
+   narration:'"잘 지내지? 별 일은 없고…" 라고 하시지만, 목소리가 좀 무겁다. 알고 보니 보일러가 고장났다고.',
+   weight:5, conditions:{monthMin:4}, choices:[
+     {text:'보일러 교체비 50만원 보내드린다', eff:{cash:-500000, relation:+15, mental:+8}},
+     {text:'20만원만 보내드린다', eff:{cash:-200000, relation:+8, mental:+3}},
+     {text:'미안하다, 다음에 도와드린다고 한다', eff:{relation:-8, mental:-10}}
+   ]},
+
+  {id:'ev_fomo_coin', tag:'social', tagName:'FOMO', title:'단톡방 인증샷',
+   narration:'친구가 단톡방에 한 달 만에 +180% 수익 인증샷을 올렸다. "○○코인 아직 늦지 않았다"고 한다.',
+   weight:6, conditions:{monthMin:2}, choices:[
+     {text:'무시한다 (멘탈-5, 관계 그대로)', eff:{mental:-5}},
+     {text:'30만원만 코인으로 (도박)', eff:{cash:-300000, addCoin:300000}},
+     {text:'100만원 풀매수 (이번엔 나도)', eff:{cash:-1000000, addCoin:1000000, mental:+8}, tempting:true}
+   ]},
+
+  {id:'ev_subscription', tag:'daily', tagName:'일상', title:'구독료가 자꾸 늘어난다',
+   narration:'넷플릭스, 유튜브, 멜론, 쿠팡, 챗GPT, 헬스장... 카드 내역을 보니 작은 결제가 잔뜩 있다.',
+   weight:4, choices:[
+     {text:'다 정리한다 (고정지출 -30,000원)', eff:{rentChange:-30000, mental:-3}},
+     {text:'절반만 정리', eff:{rentChange:-15000}},
+     {text:'그냥 둔다 (편한 게 최고)', eff:{mental:+3}}
+   ]},
+
+  {id:'ev_clothes', tag:'daily', tagName:'욜로', title:'세일 알림',
+   narration:'좋아하는 브랜드가 50% 세일 중이다. SNS에서 다들 샀다고 인증 중.',
+   weight:5, choices:[
+     {text:'필요한 것만 1개 (-80,000원)', eff:{cash:-80000, mental:+5}},
+     {text:'이참에 풀세팅 (-450,000원)', eff:{cash:-450000, mental:+15, relation:+3}, tempting:true},
+     {text:'장바구니만 채우고 끈다', eff:{mental:-3}}
+   ]},
+
+  {id:'ev_taxi', tag:'daily', tagName:'일상', title:'금요일 밤, 막차를 놓쳤다',
+   narration:'친구들과 한 잔 더 하다가 시간이 늦었다. 택시 vs 카카오T 대리…',
+   weight:5, choices:[
+     {text:'택시 잡아탄다 (-35,000원)', eff:{cash:-35000}},
+     {text:'근처 찜질방에서 잔다 (-15,000원)', eff:{cash:-15000, health:-5}},
+     {text:'걸어서 한 시간 (-0원, 건강+3)', eff:{health:+3, mental:-3}}
+   ]},
+
+  // ===== 커리어 이벤트 =====
+  {id:'ev_raise', tag:'career', tagName:'커리어', title:'연봉협상 시즌',
+   narration:'상사가 다음 주에 1:1 면담 일정을 잡았다. 연봉 이야기를 꺼낼 타이밍이다.',
+   weight:3, conditions:{monthMin:11, monthMod:12}, choices:[
+     {text:'강하게 요구한다 (15% 인상 / 또는 거절당함)', eff:{salaryBoost:0.15, riskRaise:true}},
+     {text:'적당히 요구한다 (6~8% 인상)', eff:{salaryBoost:0.07}},
+     {text:'아무 말 안 한다 (3% 자동인상)', eff:{salaryBoost:0.03, mental:-5}}
+   ]},
+
+  {id:'ev_offer', tag:'career', tagName:'이직', title:'헤드헌터에게 연락이 왔다',
+   narration:'"지금 연봉 +30%, 조금 더 빡센 회사" 라고 한다. 결정할 시간은 일주일.',
+   weight:3, conditions:{monthMin:8}, choices:[
+     {text:'이직한다 (월급 +25%, 멘탈-10)', eff:{salaryBoost:0.25, mental:-10, health:-5}},
+     {text:'고민한다 (보류)', eff:{mental:-5}},
+     {text:'지금이 좋다 (안 간다)', eff:{mental:+3}}
+   ]},
+
+  {id:'ev_layoff', tag:'danger', tagName:'경고', title:'회사 분위기가 심상치 않다',
+   narration:'경기침체 뉴스가 계속 나오고, 회사도 인력 감축 이야기가 돈다.',
+   weight:2, conditions:{monthMin:6}, choices:[
+     {text:'몸을 사린다 (멘탈-8, 안전)', eff:{mental:-8}},
+     {text:'성과를 내려 분투한다 (멘탈-15, 보너스 확률)', eff:{mental:-15, health:-8, careerExp:+20}},
+     {text:'이력서를 돌린다 (멘탈-5, 이직기회 활성화)', eff:{mental:-5, flag:'job_hunting'}}
+   ]},
+
+  // ===== 사회 이벤트 =====
+  {id:'ev_rate_up', tag:'social', tagName:'경제뉴스', title:'금리가 또 올랐다',
+   narration:'한국은행 기준금리 인상. 대출이 있다면 부담이 커진다. 예금금리도 같이 오른다.',
+   weight:3, choices:[
+     {text:'적금을 더 든다', eff:{savingsBoost:0.005}},
+     {text:'대출을 갚는다 (현금 -1,000,000)', eff:{cash:-1000000, debt:-1000000, creditScore:+10}, condition:'hasDebt'},
+     {text:'그냥 본다 (영향 받음)', eff:{interestPenalty:true}}
+   ]},
+
+  {id:'ev_inflation', tag:'social', tagName:'경제뉴스', title:'마트 갔다가 깜짝 놀랐다',
+   narration:'장바구니 물가가 너무 올랐다. 식비 부담이 늘어난다.',
+   weight:3, choices:[
+     {text:'밀프렙으로 절약 (식비-, 시간 투자)', eff:{rentChange:-30000, mental:-3, health:+3}},
+     {text:'그냥 산다 (식비+)', eff:{rentChange:+40000}},
+     {text:'편의점 끼니로 대체 (식비-, 건강-)', eff:{rentChange:-20000, health:-8}}
+   ]},
+
+  {id:'ev_scam', tag:'danger', tagName:'경고', title:'수상한 메시지',
+   narration:'"○○님 택배가 반송되었습니다. 확인하기 → ..." 클릭하려는 순간 멈춰선다.',
+   weight:2, choices:[
+     {text:'바로 삭제한다', eff:{mental:+3}},
+     {text:'호기심에 들어가본다 (개인정보 유출 위험)', eff:{cash:-500000, creditScore:-30, mental:-15}, tempting:true},
+     {text:'경찰서에 신고한다 (관계+3)', eff:{relation:+3, mental:+5}}
+   ]},
+
+  // ===== 휴식/회복 =====
+  {id:'ev_vacation', tag:'daily', tagName:'휴식', title:'연차를 쓰고 떠나볼까',
+   narration:'한 달간 너무 지쳤다. 짧게 여행을 가볼까 고민 중.',
+   weight:4, conditions:{mentalMax:55}, choices:[
+     {text:'국내 여행 (-300,000원, 멘탈+25)', eff:{cash:-300000, mental:+25, health:+5}},
+     {text:'해외 여행 (-1,500,000원, 멘탈+40)', eff:{cash:-1500000, mental:+40, health:+8}, tempting:true},
+     {text:'집에서 푹 쉰다 (멘탈+10)', eff:{mental:+10, health:+5}}
+   ]},
+
+  {id:'ev_pt', tag:'daily', tagName:'자기관리', title:'헬스장 PT 권유',
+   narration:'헬스장 트레이너가 PT를 추천한다. 10회 60만원. 자세 한 번 잡고 가시라고.',
+   weight:3, choices:[
+     {text:'PT 등록 (-600,000원, 건강+20)', eff:{cash:-600000, health:+20, mental:+10}},
+     {text:'혼자 운동한다 (건강+5)', eff:{health:+5, mental:+3}},
+     {text:'운동은 다음에 (건강-3)', eff:{health:-3}}
+   ]}
+];
+
+/* 엔딩 정의 */
+const ENDINGS = [
+  {id:'fire', icon:'🔥', title:'FIRE 달성',
+   check:s=>Game.netWorth(s)>=300000000,
+   desc:'당신은 더 이상 일하지 않아도 됩니다.\n자유를 손에 넣었습니다.',
+   epilogue:'"이제 진짜 내 시간을 산다." — 그 말을 실감하는 첫 아침.'},
+  {id:'rich', icon:'🏆', title:'경제적 자립 성공',
+   check:s=>Game.netWorth(s)>=100000000 && s.stats.mental>=50,
+   desc:'30세, 순자산 1억 돌파.\n안정과 성장 두 마리 토끼를 잡았습니다.',
+   epilogue:'"버는 만큼 모으고, 모은 만큼 굴렸다." 누군가 비결을 물으면 그렇게 답할 것이다.'},
+  {id:'burnout', icon:'💔', title:'번아웃',
+   check:s=>s.stats.mental<=0,
+   desc:'당신의 멘탈이 한계에 도달했습니다.\n잠시 모든 것을 내려놓아야 합니다.',
+   epilogue:'"이 정도면 잘 버틴 거야." 처음으로 자신에게 그렇게 말해본다.'},
+  {id:'health', icon:'🏥', title:'건강 악화',
+   check:s=>s.stats.health<=0,
+   desc:'건강을 잃었습니다.\n돈으로 살 수 없는 것이 무엇인지 알게 됩니다.',
+   epilogue:'"가장 비싼 것은 결국 시간이었다."'},
+  {id:'debt', icon:'⚠️', title:'신용불량의 길',
+   check:s=>s.money.debt>=50000000 || s.money.creditScore<=400,
+   desc:'빚이 당신을 짓누릅니다.\n다시 시작해야 합니다.',
+   epilogue:'"한 발만 잘못 디뎌도 무너진다는 걸 늦게 깨달았다."'},
+  {id:'addict', icon:'🎰', title:'투자 중독',
+   check:s=>s.flags.includes('addicted') && Game.netWorth(s)<5000000,
+   desc:'코인과 차트만 보다가 정신을 차렸을 땐, 잔고가 텅 비어 있었습니다.',
+   epilogue:'"수익률 화면을 끌 줄 알아야 했다."'},
+  {id:'stable', icon:'😌', title:'안정형 삶',
+   check:s=>Game.netWorth(s)>=50000000 && s.stats.health>=70,
+   desc:'엄청난 부자는 아니지만,\n흔들리지 않는 일상을 손에 넣었습니다.',
+   epilogue:'"평범하다는 게 얼마나 어려운 일인지, 이제는 안다."'},
+  {id:'yolo', icon:'🎈', title:'YOLO 라이프',
+   check:s=>s.stats.mental>=70 && s.money.savings+s.money.investments<5000000,
+   desc:'돈은 별로 없지만, 경험과 추억은 누구보다 많습니다.',
+   epilogue:'"통장 잔고는 적지만, 내 일기장은 두껍다."'},
+  {id:'normal', icon:'☕', title:'평범한 삶',
+   check:s=>true, // 기본값
+   desc:'특별할 것 없는 3년이었습니다.\n그래서 더 소중합니다.',
+   epilogue:'"무사히 살아남았다. 그것만으로 충분한 날도 있다."'}
+];
+
+/* =========================================================
+   상태
+   ========================================================= */
+let GS = null; // gameState
+
+function initState(name, jobId){
+  const job = JOBS.find(j=>j.id===jobId);
+  return {
+    meta:{name, age:27, month:0, year:2026, startMonth:1, jobId, jobName:job.name},
+    money:{cash:3000000, savings:0, investments:{}, debt:0, creditScore:720},
+    income:{salary:job.salary, jobVol:job.vol},
+    fixed:{rent:550000, food:400000, transport:90000, phone:55000, util:60000, insurance:50000, sub:30000},
+    stats:{health:80, mental:70, relation:60, careerLevel:1, careerExp:0},
+    flags:[],
+    history:{prevNetWorth:3000000, coinPeak:0, coinMonths:0},
+    pendingEvent:null,
+    receiptData:null,
+    phase:'monthStart' // monthStart | event | receipt
+  };
+}
+
+/* =========================================================
+   Game logic
+   ========================================================= */
+const Game = {
+  netWorth(s){
+    let invSum = 0;
+    for(const k in s.money.investments) invSum += s.money.investments[k];
+    return s.money.cash + s.money.savings + invSum - s.money.debt;
+  },
+  fixedTotal(s){
+    const f = s.fixed;
+    return f.rent+f.food+f.transport+f.phone+f.util+f.insurance+f.sub;
+  },
+
+  startNew(){
+    const name = document.getElementById('player-name').value.trim() || '플레이어';
+    const sel = document.querySelector('.job-card.selected');
+    if(!sel){ UI.toast('직업을 선택해주세요'); return; }
+    const jobId = sel.dataset.id;
+    GS = initState(name, jobId);
+    UI.show('game-screen');
+    Game.startMonth();
+  },
+
+  startMonth(){
+    if(!GS) return;
+    GS.meta.month += 1;
+    const prevNet = Game.netWorth(GS);
+
+    // 1. 월급 입금
+    let income = GS.income.salary;
+    if(GS.income.jobVol>0){
+      const r = 1 + (Math.random()*2-1)*GS.income.jobVol;
+      income = Math.round(income * r);
+    }
+    GS.money.cash += income;
+
+    // 2. 고정지출
+    const fixed = Game.fixedTotal(GS);
+    GS.money.cash -= fixed;
+
+    // 3. 적금/투자 수익률 적용
+    let invIncome = 0;
+    // 적금
+    const savingsR = 0.036/12;
+    const sGain = Math.round(GS.money.savings * savingsR);
+    GS.money.savings += sGain;
+    invIncome += sGain;
+
+    // 투자
+    const marketBias = (Math.random()-0.5)*0.04;
+    for(const inv of INVESTMENTS){
+      if(inv.id==='savings') continue;
+      if(GS.money.investments[inv.id]){
+        const r = inv.baseReturn + marketBias + (Math.random()*2-1)*inv.vol;
+        const gain = Math.round(GS.money.investments[inv.id] * r);
+        GS.money.investments[inv.id] = Math.max(0, GS.money.investments[inv.id] + gain);
+        invIncome += gain;
+      }
+    }
+
+    // 4. 부채 이자
+    if(GS.money.debt>0){
+      const interest = Math.round(GS.money.debt * 0.005);
+      GS.money.cash -= interest;
+      invIncome -= interest;
+    }
+
+    // 5. 자연 감소
+    GS.stats.mental = Math.max(0, GS.stats.mental - 3);
+    GS.stats.health = Math.max(0, GS.stats.health - 2);
+    GS.stats.relation = Math.max(0, GS.stats.relation - 1);
+
+    // 6. 커리어 경험치
+    if(GS.stats.mental>30 && GS.stats.health>30){
+      GS.stats.careerExp += 5;
+    }
+
+    // 받은 income, fixed, invIncome 저장 (영수증용)
+    GS.receiptData = {income, fixed, invIncome, prevNet};
+
+    // 7. 엔딩 체크
+    if(Game.checkEnding()) return;
+
+    // 8. 이벤트 추첨
+    GS.pendingEvent = Game.pickEvent();
+    GS.phase = 'event';
+    UI.renderGame();
+  },
+
+  pickEvent(){
+    // 조건 필터링
+    const pool = EVENTS.filter(e=>{
+      const c = e.conditions||{};
+      if(c.monthMin && GS.meta.month < c.monthMin) return false;
+      if(c.monthMod && GS.meta.month % c.monthMod !== 0) return false;
+      if(c.mentalMax && GS.stats.mental > c.mentalMax) return false;
+      if(c.healthMax && GS.stats.health > c.healthMax) return false;
+      return true;
+    });
+
+    // 가중치 추첨
+    let total = 0;
+    for(const e of pool) total += (e.weight||1);
+    let r = Math.random()*total;
+    for(const e of pool){
+      r -= (e.weight||1);
+      if(r<=0) return e;
+    }
+    return pool[0];
+  },
+
+  applyChoice(choiceIdx){
+    if(!GS.pendingEvent) return;
+    const choice = GS.pendingEvent.choices[choiceIdx];
+    const eff = choice.eff||{};
+
+    if(eff.cash) GS.money.cash += eff.cash;
+    if(eff.debt) GS.money.debt += eff.debt;
+    if(eff.creditScore) GS.money.creditScore = Math.max(350, Math.min(1000, GS.money.creditScore + eff.creditScore));
+    if(eff.mental) GS.stats.mental = Math.max(0, Math.min(100, GS.stats.mental + eff.mental));
+    if(eff.health) GS.stats.health = Math.max(0, Math.min(100, GS.stats.health + eff.health));
+    if(eff.relation) GS.stats.relation = Math.max(0, Math.min(100, GS.stats.relation + eff.relation));
+    if(eff.careerExp) GS.stats.careerExp += eff.careerExp;
+    if(eff.addCoin){
+      GS.money.investments.coin = (GS.money.investments.coin||0) + eff.addCoin;
+    }
+    if(eff.salaryBoost){
+      if(eff.riskRaise && Math.random()<0.3){
+        UI.toast('연봉협상 결렬! 인상 없음');
+      } else {
+        GS.income.salary = Math.round(GS.income.salary * (1+eff.salaryBoost));
+        UI.toast(`월급 ${Math.round(eff.salaryBoost*100)}% 인상!`);
+      }
+    }
+    if(eff.rentChange){
+      GS.fixed.food += eff.rentChange;
+    }
+    if(eff.flag){
+      if(!GS.flags.includes(eff.flag)) GS.flags.push(eff.flag);
+    }
+
+    // 코인 중독 플래그 체크
+    const invSum = Object.values(GS.money.investments).reduce((a,b)=>a+b,0);
+    const coinAmt = GS.money.investments.coin||0;
+    if(invSum>0 && coinAmt/invSum > 0.7){
+      GS.history.coinMonths += 1;
+      if(GS.history.coinMonths >= 4 && !GS.flags.includes('addicted')){
+        GS.flags.push('addicted');
+      }
+    } else {
+      GS.history.coinMonths = Math.max(0, GS.history.coinMonths-1);
+    }
+
+    GS.pendingEvent = null;
+    if(Game.checkEnding()) return;
+    GS.phase = 'receipt';
+    UI.renderGame();
+  },
+
+  endMonth(){
+    GS.history.prevNetWorth = Game.netWorth(GS);
+    if(Game.checkEnding()) return;
+    if(GS.meta.month >= 36){
+      Game.triggerEnding();
+      return;
+    }
+    Game.startMonth();
+  },
+
+  checkEnding(){
+    for(const e of ENDINGS){
+      if(e.id==='normal') continue;
+      if(e.check(GS)){
+        Game.triggerEnding(e);
+        return true;
+      }
+    }
+    return false;
+  },
+
+  triggerEnding(forced){
+    const ending = forced || ENDINGS.find(e=>e.check(GS)) || ENDINGS[ENDINGS.length-1];
+    UI.showEnding(ending);
+  }
+};
+
+/* =========================================================
+   UI
+   ========================================================= */
+const UI = {
+  show(id){
+    document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+  },
+
+  showCreate(){
+    UI.show('create-screen');
+    const grid = document.getElementById('job-grid');
+    grid.innerHTML = '';
+    JOBS.forEach(j=>{
+      const div = document.createElement('div');
+      div.className = 'job-card';
+      div.dataset.id = j.id;
+      div.innerHTML = `
+        <div class="name">${j.name}</div>
+        <div class="salary">월 ${(j.salary/10000).toFixed(0)}만원</div>
+        <div class="desc-sm">${j.desc.replace(/\n/g,'<br>')}</div>
+      `;
+      div.onclick = ()=>{
+        document.querySelectorAll('.job-card').forEach(c=>c.classList.remove('selected'));
+        div.classList.add('selected');
+      };
+      grid.appendChild(div);
+    });
+  },
+
+  showHelp(){
+    alert([
+      '🎮 월급은 통장을 스칠 뿐',
+      '',
+      '· 한 턴 = 한 달',
+      '· 매월 월급을 받고 고정지출이 빠진 뒤,',
+      '  이벤트와 선택을 통해 자산을 키우세요.',
+      '',
+      '· 멘탈/건강이 0이 되면 즉시 엔딩',
+      '· 신용점수, 부채, 투자 비중 모두 위험요소',
+      '',
+      '· 36개월(3년) 도달 또는 특수조건 시 엔딩',
+      '· 9가지 엔딩이 준비되어 있습니다.',
+      '',
+      '저장은 우상단 버튼으로 수동 저장됩니다.'
+    ].join('\n'));
+  },
+
+  renderGame(){
+    if(!GS) return;
+    // 상단바
+    const startMonth = GS.meta.startMonth;
+    const passed = GS.meta.month - 1;
+    const totalMonth = startMonth + passed;
+    const year = GS.meta.year + Math.floor((totalMonth-1)/12);
+    const month = ((totalMonth-1)%12)+1;
+    document.getElementById('game-date').textContent = `${year}년 ${month}월`;
+    document.getElementById('game-age').textContent = `${GS.meta.age + Math.floor((startMonth-1+passed)/12)}세 · ${GS.meta.month}개월차 · ${GS.meta.jobName}`;
+
+    // 자산
+    const net = Game.netWorth(GS);
+    document.getElementById('net-worth').textContent = fmt(net) + '원';
+    const change = net - GS.history.prevNetWorth;
+    const chEl = document.getElementById('net-change');
+    chEl.className = 'change ' + (change>=0?'up':'down');
+    chEl.textContent = (change>=0?'▲ +':'▼ ') + fmt(Math.abs(change));
+
+    document.getElementById('cash-val').textContent = fmt(GS.money.cash) + '원';
+    const invSum = Object.values(GS.money.investments).reduce((a,b)=>a+b,0);
+    document.getElementById('asset-val').textContent = fmt(GS.money.savings + invSum) + '원';
+    document.getElementById('credit-val').textContent = GS.money.creditScore + (GS.money.debt>0?` · -${fmt(GS.money.debt)}`:'');
+
+    // 스탯
+    UI.setBar('health', GS.stats.health);
+    UI.setBar('mental', GS.stats.mental);
+    UI.setBar('relation', GS.stats.relation);
+
+    // 메인 콘텐츠
+    const cont = document.getElementById('game-content');
+    cont.innerHTML = '';
+
+    if(GS.phase === 'event' && GS.pendingEvent){
+      cont.appendChild(UI.renderEvent(GS.pendingEvent));
+    } else if(GS.phase === 'receipt'){
+      cont.appendChild(UI.renderReceipt());
+      const btn = document.createElement('button');
+      btn.className = 'next-btn';
+      btn.textContent = `다음 달로 ▶`;
+      btn.onclick = ()=>Game.endMonth();
+      cont.appendChild(btn);
+    }
+  },
+
+  setBar(name, val){
+    const bar = document.getElementById('bar-'+name);
+    const valEl = document.getElementById('val-'+name);
+    bar.style.width = val + '%';
+    bar.className = val>=60?'bar-fill-good':val>=30?'bar-fill-mid':'bar-fill-bad';
+    valEl.textContent = val;
+  },
+
+  renderEvent(ev){
+    const card = document.createElement('div');
+    card.className = 'event-card';
+    card.innerHTML = `
+      <span class="tag ${ev.tag}">${ev.tagName||'이벤트'}</span>
+      <h3>${ev.title}</h3>
+      <div class="narration">${ev.narration}</div>
+      <div class="choices"></div>
+    `;
+    const choicesEl = card.querySelector('.choices');
+    ev.choices.forEach((c,i)=>{
+      const b = document.createElement('button');
+      b.className = 'choice-btn' + (c.tempting?' tempting':'');
+      b.innerHTML = `${c.text}`;
+      b.onclick = ()=>Game.applyChoice(i);
+      choicesEl.appendChild(b);
+    });
+    return card;
+  },
+
+  renderReceipt(){
+    const r = GS.receiptData;
+    const div = document.createElement('div');
+    div.className = 'receipt';
+    const fixed = Game.fixedTotal(GS);
+    div.innerHTML = `
+      <h4>월 말 정 산</h4>
+      <div class="date-line">${GS.meta.jobName} · ${GS.meta.month}개월차</div>
+      <div class="line"><span>월급</span><span class="pos">+${fmt(r.income)}</span></div>
+      <div class="line"><span>월세</span><span class="neg">-${fmt(GS.fixed.rent)}</span></div>
+      <div class="line"><span>식비</span><span class="neg">-${fmt(GS.fixed.food)}</span></div>
+      <div class="line"><span>교통/통신</span><span class="neg">-${fmt(GS.fixed.transport+GS.fixed.phone)}</span></div>
+      <div class="line"><span>공과금/보험/구독</span><span class="neg">-${fmt(GS.fixed.util+GS.fixed.insurance+GS.fixed.sub)}</span></div>
+      <div class="line"><span>투자/이자 손익</span><span class="${r.invIncome>=0?'pos':'neg'}">${r.invIncome>=0?'+':''}${fmt(r.invIncome)}</span></div>
+      <div class="line total-line"><span>이번 달 순변동</span><span class="${(r.income-fixed+r.invIncome)>=0?'pos':'neg'}">${(r.income-fixed+r.invIncome)>=0?'+':''}${fmt(r.income-fixed+r.invIncome)}</span></div>
+      <div class="quote">${UI.randomQuote()}</div>
+    `;
+    return div;
+  },
+
+  randomQuote(){
+    const qs = [
+      '"이번 달도 무사히 살아남았다…"',
+      '"통장에 잠깐 머물다 가는 월급."',
+      '"카드값만 막아도 다행이다."',
+      '"다음 달엔 좀 모아야지."',
+      '"오늘도 어른이 되어간다."',
+      '"적금이라도 들길 잘했다."',
+      '"내일의 나에게 미루지 말자."'
+    ];
+    return qs[Math.floor(Math.random()*qs.length)];
+  },
+
+  openInvest(){
+    const body = document.getElementById('invest-body');
+    body.innerHTML = '';
+
+    // 자산 요약
+    const summary = document.createElement('div');
+    summary.style.cssText = 'margin-bottom:14px;padding:14px;background:var(--panel);border:1px solid var(--line);font-size:12px';
+    const invSum = Object.values(GS.money.investments).reduce((a,b)=>a+b,0);
+    summary.innerHTML = `
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--ink-faint)">보유 현금</span><span>${fmt(GS.money.cash)}원</span></div>
+      <div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:var(--ink-faint)">적금 총액</span><span>${fmt(GS.money.savings)}원</span></div>
+      <div style="display:flex;justify-content:space-between"><span style="color:var(--ink-faint)">투자 평가액</span><span>${fmt(invSum)}원</span></div>
+    `;
+    body.appendChild(summary);
+
+    // 적금
+    body.appendChild(UI.makeInvestItem({id:'savings', name:'적금 (연 3.6%)', desc:'안전. 언제든 해지 가능.', risk:'★'}, GS.money.savings, 'savings'));
+
+    // 투자 상품
+    INVESTMENTS.forEach(inv=>{
+      if(inv.id==='savings') return;
+      if(GS.meta.month < inv.unlock){
+        const div = document.createElement('div');
+        div.className = 'invest-item';
+        div.style.opacity = '.4';
+        div.innerHTML = `<div class="name">🔒 ${inv.name} (${inv.unlock}개월차 해금)</div>`;
+        body.appendChild(div);
+        return;
+      }
+      body.appendChild(UI.makeInvestItem(inv, GS.money.investments[inv.id]||0, 'inv'));
+    });
+
+    document.getElementById('invest-modal').classList.add('open');
+  },
+
+  makeInvestItem(inv, holding, type){
+    const div = document.createElement('div');
+    div.className = 'invest-item';
+    div.innerHTML = `
+      <div class="top">
+        <div class="name">${inv.name}</div>
+        <div class="risk">위험도 ${inv.risk}</div>
+      </div>
+      <div class="desc-i">${inv.desc}</div>
+      <div class="holdings">보유: ${fmt(holding)}원</div>
+      <div class="actions">
+        <input type="number" placeholder="금액" min="0" step="100000" />
+        <button data-act="buy">매수</button>
+        <button data-act="sell">매도</button>
+      </div>
+    `;
+    const input = div.querySelector('input');
+    div.querySelectorAll('button').forEach(b=>{
+      b.onclick = ()=>{
+        const amt = parseInt(input.value)||0;
+        if(amt<=0){ UI.toast('금액을 입력하세요'); return; }
+        const act = b.dataset.act;
+        if(act==='buy'){
+          if(GS.money.cash < amt){ UI.toast('현금이 부족합니다'); return; }
+          GS.money.cash -= amt;
+          if(type==='savings'){ GS.money.savings += amt; }
+          else { GS.money.investments[inv.id] = (GS.money.investments[inv.id]||0) + amt; }
+          UI.toast(`${fmt(amt)}원 매수`);
+        } else {
+          if(type==='savings'){
+            if(GS.money.savings < amt){ UI.toast('적금 잔액 부족'); return; }
+            GS.money.savings -= amt;
+          } else {
+            if((GS.money.investments[inv.id]||0) < amt){ UI.toast('잔액 부족'); return; }
+            GS.money.investments[inv.id] -= amt;
+          }
+          GS.money.cash += amt;
+          UI.toast(`${fmt(amt)}원 매도`);
+        }
+        UI.openInvest();
+        UI.renderGame();
+      };
+    });
+    return div;
+  },
+
+  openExpense(){
+    const body = document.getElementById('expense-body');
+    const f = GS.fixed;
+    const total = Game.fixedTotal(GS);
+    body.innerHTML = `
+      <div style="font-size:12px;color:var(--ink-dim);margin-bottom:14px">매월 자동으로 빠져나가는 항목입니다.<br>일부는 이벤트 선택으로 변경됩니다.</div>
+      <div class="invest-item">
+        <div class="line"><span>월세</span><span>${fmt(f.rent)}원</span></div>
+        <div class="line"><span>식비</span><span>${fmt(f.food)}원</span></div>
+        <div class="line"><span>교통비</span><span>${fmt(f.transport)}원</span></div>
+        <div class="line"><span>통신비</span><span>${fmt(f.phone)}원</span></div>
+        <div class="line"><span>공과금</span><span>${fmt(f.util)}원</span></div>
+        <div class="line"><span>보험</span><span>${fmt(f.insurance)}원</span></div>
+        <div class="line"><span>구독료</span><span>${fmt(f.sub)}원</span></div>
+        <div class="line" style="margin-top:10px;padding-top:8px;border-top:1px solid var(--line);font-weight:700"><span>월 합계</span><span style="color:var(--accent)">${fmt(total)}원</span></div>
+      </div>
+      <style>.modal-body .line{display:flex;justify-content:space-between;padding:6px 0;font-size:13px}</style>
+    `;
+    document.getElementById('expense-modal').classList.add('open');
+  },
+
+  closeModal(id){ document.getElementById(id).classList.remove('open'); },
+
+  showEnding(ending){
+    document.getElementById('ending-icon').textContent = ending.icon;
+    document.getElementById('ending-title').textContent = ending.title;
+    document.getElementById('ending-desc').textContent = ending.desc;
+    document.getElementById('ending-epilogue').textContent = '— ' + ending.epilogue;
+
+    const invSum = Object.values(GS.money.investments).reduce((a,b)=>a+b,0);
+    document.getElementById('ending-stats').innerHTML = `
+      <div class="ln"><span>진행 개월</span><span>${GS.meta.month}개월</span></div>
+      <div class="ln"><span>최종 순자산</span><span>${fmt(Game.netWorth(GS))}원</span></div>
+      <div class="ln"><span>현금 / 적금 / 투자</span><span>${fmt(GS.money.cash)} / ${fmt(GS.money.savings)} / ${fmt(invSum)}</span></div>
+      <div class="ln"><span>최종 월급</span><span>${fmt(GS.income.salary)}원</span></div>
+      <div class="ln"><span>신용점수</span><span>${GS.money.creditScore}</span></div>
+      <div class="ln"><span>건강 / 멘탈 / 관계</span><span>${GS.stats.health} / ${GS.stats.mental} / ${GS.stats.relation}</span></div>
+    `;
+    UI.show('ending-screen');
+  },
+
+  toast(msg){
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(()=>t.classList.remove('show'), 1800);
+  }
+};
+
+/* =========================================================
+   저장 / 불러오기
+   ========================================================= */
+const Save = {
+  KEY:'salary_passes_by_save_v1',
+  save(){
+    if(!GS){ UI.toast('진행 중인 게임이 없습니다'); return; }
+    try{
+      localStorage.setItem(Save.KEY, JSON.stringify(GS));
+      UI.toast('저장 완료');
+    }catch(e){ UI.toast('저장 실패'); }
+  },
+  load(){
+    try{
+      const raw = localStorage.getItem(Save.KEY);
+      if(!raw){ UI.toast('저장된 게임이 없습니다'); return; }
+      GS = JSON.parse(raw);
+      UI.show('game-screen');
+      UI.renderGame();
+      UI.toast('불러오기 완료');
+    }catch(e){ UI.toast('불러오기 실패'); }
+  }
+};
+
+/* =========================================================
+   유틸
+   ========================================================= */
+function fmt(n){
+  if(typeof n !== 'number') n = parseInt(n)||0;
+  return n.toLocaleString('ko-KR');
+}
+
+// 초기 렌더
+window.addEventListener('DOMContentLoaded', ()=>{
+  // 시작화면만 보이도록
+});
+
+</script>
+</body>
+</html>
